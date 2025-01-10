@@ -37,9 +37,11 @@ Please provide answers to these questions using markdown notation and place them
 3. Please provide a link to the repository you are using for this class.
 
 https://github.com/ash1-dev/CS-283
+
 4. Briefly describe what you want to get out of this class.
 
 I want to become comfortable with git and learn about what makes one programming language more efficient at a certain task than others.
+
 5. Briefly describe any concerns you might be having with being successful in this class (if any).
 
 I might have trouble working with git at first.
