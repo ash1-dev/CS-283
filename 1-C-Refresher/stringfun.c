@@ -11,13 +11,40 @@ void print_buff(char *, int);
 int  setup_buff(char *, char *, int);
 
 //prototypes for functions to handle required functionality
-int  count_words(char *, int, int);
+int  count_words(char *, int);
 //add additional prototypes here
 
 
 int setup_buff(char *buff, char *user_str, int len){
-    //TODO: #4:  Implement the setup buff as per the directions
-    return 0; //for now just so the code compiles. 
+    int buff_index = 0; // Tracks the position in the buffer
+    char prev_char = '\0'; // Tracks the last added character to handle whitespace
+    char *ptr = user_str; // Pointer to traverse the user string
+
+    // Iterate through the user string
+    while (*ptr != '\0') {
+        if (buff_index >= len) {
+            return -1; // User string is too large
+        }
+
+        // Handle non-whitespace characters
+        if (*ptr != ' ' && *ptr != '\t') {
+            buff[buff_index++] = *ptr;
+            prev_char = *ptr;
+        }
+        // Handle whitespace: Add a single space if the last character was not a space
+        else if (prev_char != ' ') {
+            buff[buff_index++] = ' ';
+            prev_char = ' ';
+        }
+        ptr++;
+    }
+
+    // Fill the remaining buffer with '.' characters
+    for (; buff_index < len; buff_index++) {
+        buff[buff_index] = '.';
+    }
+
+    return (ptr - user_str);
 }
 
 void print_buff(char *buff, int len){
@@ -33,9 +60,22 @@ void usage(char *exename){
 
 }
 
-int count_words(char *buff, int len, int str_len){
-    //YOU MUST IMPLEMENT
-    return 0;
+int count_words(char *buff, int str_len){
+    int word_count = 0;
+    int in_word = 0; //Boolean for if currently in/out of a word
+
+    for (int i = 0; i < str_len; i++) { //Iterate thru string
+        if (buff[i] != ' ') {
+            if (!in_word) {
+                word_count++;
+                in_word = 1;
+            }
+        } else {
+            in_word = 0; 
+        }
+    }
+
+    return word_count;
 }
 
 //ADD OTHER HELPER FUNCTIONS HERE FOR OTHER REQUIRED PROGRAM OPTIONS
@@ -49,7 +89,10 @@ int main(int argc, char *argv[]){
     int  user_str_len;      //length of user supplied string
 
     //TODO:  #1. WHY IS THIS SAFE, aka what if arv[1] does not exist?
-    //      PLACE A COMMENT BLOCK HERE EXPLAINING
+    /* 
+        The condition (argc < 2) ensures that argv[1] is valid and by combining the two conditions, the code ensures saftey
+        by preventing invalid memeory access. 
+    */
     if ((argc < 2) || (*argv[1] != '-')){
         usage(argv[0]);
         exit(1);
@@ -66,7 +109,7 @@ int main(int argc, char *argv[]){
     //WE NOW WILL HANDLE THE REQUIRED OPERATIONS
 
     //TODO:  #2 Document the purpose of the if statement below
-    //      PLACE A COMMENT BLOCK HERE EXPLAINING
+    //      Ensures the user provides both a valid option flag and a string.
     if (argc < 3){
         usage(argv[0]);
         exit(1);
@@ -77,9 +120,11 @@ int main(int argc, char *argv[]){
     //TODO:  #3 Allocate space for the buffer using malloc and
     //          handle error if malloc fails by exiting with a 
     //          return code of 99
-    // CODE GOES HERE FOR #3
-
-
+    buff = (char *)malloc(BUFFER_SZ * sizeof(char));
+    if (buff == NULL) {
+        exit(99);
+    }
+    
     user_str_len = setup_buff(buff, input_string, BUFFER_SZ);     //see todos
     if (user_str_len < 0){
         printf("Error setting up buffer, error = %d", user_str_len);
@@ -88,7 +133,7 @@ int main(int argc, char *argv[]){
 
     switch (opt){
         case 'c':
-            rc = count_words(buff, BUFFER_SZ, user_str_len);  //you need to implement
+            rc = count_words(buff, user_str_len);  //you need to implement
             if (rc < 0){
                 printf("Error counting words, rc = %d", rc);
                 exit(2);
@@ -98,13 +143,48 @@ int main(int argc, char *argv[]){
 
         //TODO:  #5 Implement the other cases for 'r' and 'w' by extending
         //       the case statement options
-        default:
-            usage(argv[0]);
-            exit(1);
+        case 'r':
+            printf("Reversed String: ");
+            for (int i = user_str_len - 1; i >= 0; i--) {
+                putchar(buff[i]); 
+            }
+            putchar('\n');
+            break;
+
+        case 'w': {
+            int word_index = 1;
+            int char_count = 0;
+            int in_word = 0;
+
+            printf("Word Print\n----------\n");
+            for (int i = 0; i < user_str_len; i++) {
+                if (buff[i] != ' ') {
+                    if (!in_word) {
+                        // Start of a new word
+                        printf("%d. ", word_index++);
+                        in_word = 1;
+                    }
+                    putchar(buff[i]);
+                    char_count++;
+                } else if (in_word) {
+                    // End of a word
+                    printf(" (%d)\n", char_count);
+                    char_count = 0;
+                    in_word = 0;
+                }
+            }
+
+            // Handle the last word if it ends without a space
+            if (in_word) {
+                printf(" (%d)\n", char_count);
+            }
+            break;
+        }
     }
 
     //TODO:  #6 Dont forget to free your buffer before exiting
     print_buff(buff,BUFFER_SZ);
+    free(buff);
     exit(0);
 }
 
@@ -114,4 +194,5 @@ int main(int argc, char *argv[]){
 //          is a good practice, after all we know from main() that 
 //          the buff variable will have exactly 50 bytes?
 //  
-//          PLACE YOUR ANSWER HERE
+//          If the buffer changes sizes in the future, the program won't rely on a hard-coded value
+//          and it improves readability. 
