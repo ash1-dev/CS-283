@@ -46,10 +46,53 @@
  */
 int main()
 {
-    char *cmd_buff;
+    char *cmd_buff = (char *) malloc(SH_CMD_MAX * sizeof(char));
     int rc = 0;
     command_list_t clist;
 
-    printf(M_NOT_IMPL);
-    exit(EXIT_NOT_IMPL);
+    while (1) {
+        printf("%s", SH_PROMPT);
+        if (fgets(cmd_buff, SH_CMD_MAX, stdin) == NULL) {
+            printf("\n");
+            break;
+        }
+        cmd_buff[strcspn(cmd_buff, "\n")] = '\0';
+
+        if (strcmp(cmd_buff, EXIT_CMD) == 0) {
+            cmd_buff = NULL;
+            free(cmd_buff);
+            return 0;
+        }
+
+        rc = build_cmd_list(cmd_buff, &clist);
+
+        switch (rc) {
+            case OK:
+                printf(CMD_OK_HEADER, clist.num);
+                for (int i = 0; i < clist.num; i++) {
+                    if (strlen(clist.commands[i].args) > 0) {
+                        printf("<%d>%s[%s]", i + 1, clist.commands[i].exe, clist.commands[i].args);
+                    } else {
+                        printf("<%d>%s", i + 1, clist.commands[i].exe);
+                    }
+                }
+                printf("\n");
+                break;
+            case WARN_NO_CMDS:
+                printf(CMD_WARN_NO_CMD);
+                break;
+            case ERR_TOO_MANY_COMMANDS:
+                printf(CMD_ERR_PIPE_LIMIT, CMD_MAX);
+                break;
+            case ERR_CMD_OR_ARGS_TOO_BIG:
+                printf(CMD_ERR_PIPE_LIMIT, CMD_MAX);
+                break;
+            default:
+                printf(CMD_WARN_NO_CMD);
+                break;
+        }
+    }
+    cmd_buff = NULL;
+    free(cmd_buff);
+    return 0;
 }
